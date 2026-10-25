@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PHQ-9: Patient Health Questionnaire</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+<!--
+  PHQ-9 classroom page
+  ====================
+  Everything runs in the browser. No answers are stored or sent anywhere.
+
+  To customize, edit the CONFIG object at the top of the <script> near the bottom:
+    - includeItem9: set to false to use the PHQ-8 (drops the self-harm item)
+    - counseling: your campus counseling center's name, phone, and website
+    - allowCaseMode: set to false to hide the "A case study" option
+-->
+<style>
+:root {
+  color-scheme: light;
+  --bg: #F2F4F7;
+  --surface: #FFFFFF;
+  --ink: #18212E;
+  --muted: #566273;
+  --rule: #D5DBE3;
+  --accent: #3D4FA8;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #E4E8F7;
+  --warn: #B4442E;
+  --notice: #FFF6E0;
+  --notice-rule: #E3BE5C;
+  --b1: #DCE1F5; --b2: #B6C0EA; --b3: #8C9BDB; --b4: #5F72C6; --b5: #33459E;
+  --serif: "Newsreader", Georgia, "Times New Roman", serif;
+  --sans: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #121722;
+    --surface: #1A2130;
+    --ink: #E6EAF0;
+    --muted: #9AA6B6;
+    --rule: #2E3748;
+    --accent: #9AA8F0;
+    --accent-ink: #121722;
+    --accent-soft: #252F4D;
+    --warn: #F08A73;
+    --notice: #2E2714;
+    --notice-rule: #8A7330;
+    --b1: #26305A; --b2: #34417E; --b3: #4859A8; --b4: #6577CC; --b5: #93A1EE;
+  }
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 17px/1.55 var(--sans);
+}
+main { max-width: 46rem; margin: 0 auto; padding: 3rem 1.25rem 4rem; }
+a { color: var(--accent); }
+h1, h2, h3 { font-family: var(--serif); font-weight: 600; line-height: 1.15; }
+h2 { font-size: 1.75rem; margin: 0 0 .75rem; }
+h3 { font-size: 1.25rem; margin: 2rem 0 .5rem; }
+p { margin: 0 0 1rem; }
+.small { font-size: .9rem; color: var(--muted); }
+
+/* Header */
+header { margin-bottom: 2.25rem; }
+h1 { font-size: clamp(3rem, 11vw, 4.75rem); margin: 0; letter-spacing: -.02em; }
+.fullname { font-family: var(--serif); font-style: italic; font-size: 1.4rem; margin: .1rem 0 1.25rem; color: var(--muted); }
+.privacy { font-size: .9rem; color: var(--muted); border-top: 1px solid var(--rule); padding-top: .75rem; }
+
+/* Fieldsets shared */
+fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+legend { float: left; width: 100%; padding: 0; }
+legend + * { clear: both; }
+input[type="radio"] { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+
+.choice span {
+  display: flex; flex-direction: column; justify-content: center; gap: .1rem;
+  height: 100%;
+  padding: .6rem .75rem;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--surface);
+  cursor: pointer;
+  line-height: 1.25;
+}
+.choice span:hover { border-color: var(--accent); }
+.choice input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.choice input:focus-visible + span { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* Mode and cases */
+.setup { margin-bottom: 2rem; }
+.setup legend { font-weight: 700; margin-bottom: .6rem; }
+.mode-opts { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; max-width: 26rem; }
+.mode-opts span { min-height: 2.9rem; font-weight: 700; }
+#case-panel { margin-top: 1.5rem; }
+.field label { display: block; font-weight: 700; margin-bottom: .4rem; }
+.field label .small { font-weight: 400; }
+.field input {
+  font: inherit; width: 100%; max-width: 26rem;
+  padding: .6rem .75rem;
+  border: 1px solid var(--rule); border-radius: 8px;
+  background: var(--surface); color: var(--ink);
+}
+.field input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-color: var(--accent); }
+.field p { margin: .6rem 0 0; }
+
+/* Items */
+.stem { font-family: var(--serif); font-size: 1.3rem; line-height: 1.35; margin: 0 0 .5rem; }
+.item { border-top: 1px solid var(--rule); padding: 1.25rem 0 1.35rem; }
+.item legend { display: flex; gap: .75rem; align-items: baseline; }
+.num { font-family: var(--serif); font-size: 1.35rem; color: var(--muted); min-width: 1.4rem; }
+.opts { display: grid; grid-template-columns: repeat(4, 1fr); gap: .4rem; margin-top: .8rem; }
+.opts span { min-height: 3.6rem; font-size: .92rem; }
+.opts b { font-family: var(--serif); font-size: 1.05rem; }
+.item.missing .num { color: var(--warn); }
+.item.missing .opts span { border-color: var(--warn); }
+.item.difficulty .opts b { display: none; }
+@media (max-width: 560px) {
+  .opts { grid-template-columns: 1fr 1fr; }
+}
+
+/* Actions */
+.actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.5rem; align-items: center; }
+.btn {
+  font: inherit; font-weight: 700;
+  padding: .75rem 1.25rem;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+  cursor: pointer;
+}
+.btn.secondary { background: transparent; color: var(--accent); }
+.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+#error { color: var(--warn); font-weight: 700; margin: .75rem 0 0; min-height: 1.5em; }
+
+/* Results */
+#results { margin-top: 3rem; padding-top: 2rem; border-top: 2px solid var(--ink); }
+#results:focus { outline: none; }
+.total { font-size: 1.2rem; }
+.scale { position: relative; padding-top: 2.6rem; margin: 1.5rem 0 1.75rem; }
+.marker {
+  position: absolute; top: 0;
+  transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center;
+  pointer-events: none;
+}
+.marker span {
+  font-family: var(--serif); font-weight: 600; font-size: 1.05rem;
+  background: var(--ink); color: var(--bg);
+  border-radius: 999px; padding: 0 .6rem; line-height: 1.6rem;
+}
+.marker::after { content: ""; width: 2px; height: calc(1rem + 18px); background: var(--ink); }
+.track { display: flex; gap: 2px; height: 16px; border-radius: 8px; overflow: hidden; }
+.seg { opacity: .55; }
+.seg.active { opacity: 1; }
+.seg-labels { display: flex; gap: 2px; font-size: .78rem; line-height: 1.25; color: var(--muted); }
+.seg-labels > div { padding: .45rem .25rem 0 0; min-width: 0; }
+.seg-labels .range { display: block; font-variant-numeric: tabular-nums; }
+.seg-labels .active { color: var(--ink); font-weight: 700; }
+
+.table-wrap { overflow-x: auto; margin: 1rem 0; }
+table { border-collapse: collapse; width: 100%; font-size: .92rem; min-width: 34rem; }
+th, td { text-align: left; padding: .55rem .6rem .55rem 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 700; color: var(--muted); }
+td.yes { font-weight: 700; }
+tr.hit td { background: var(--accent-soft); }
+tr.hit td:first-child { padding-left: .4rem; }
+td:first-child, th:first-child { padding-left: .4rem; }
+.crit { font-family: var(--serif); font-weight: 600; margin-right: .35rem; }
+.core { font-size: .8rem; color: var(--muted); white-space: nowrap; }
+.verdict { font-family: var(--serif); font-size: 1.2rem; line-height: 1.4; }
+
+.notice {
+  background: var(--notice); border: 1px solid var(--notice-rule);
+  border-radius: 8px; padding: 1rem 1.15rem; margin: 0 0 1.5rem;
+}
+.notice p:last-child { margin-bottom: 0; }
+.discuss { padding-left: 1.2rem; }
+.discuss li { margin-bottom: .6rem; }
+
+/* Footer */
+footer { margin-top: 3.5rem; padding-top: 1.25rem; border-top: 1px solid var(--rule); font-size: .88rem; color: var(--muted); }
+footer p { margin-bottom: .75rem; }
+
+[hidden] { display: none !important; }
+
+@media print {
+  :root {
+    --bg: #FFFFFF; --surface: #FFFFFF; --ink: #000000; --muted: #444444; --rule: #BBBBBB;
+    --accent: #3D4FA8; --accent-ink: #FFFFFF; --accent-soft: #E4E8F7;
+    --b1: #DCE1F5; --b2: #B6C0EA; --b3: #8C9BDB; --b4: #5F72C6; --b5: #33459E;
+    --notice: #FFF6E0; --notice-rule: #E3BE5C;
+  }
+  body { font-size: 11pt; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  main { padding: 0; max-width: none; }
+  .no-print { display: none !important; }
+  .item, .notice, table { break-inside: avoid; }
+  #results { break-before: page; }
+}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1 id="title">PHQ-9</h1>
+    <p class="fullname">Patient Health Questionnaire</p>
+    <p id="lede"></p>
+    <p class="privacy">Your answers stay in this browser tab. Nothing is saved or sent anywhere, and refreshing the page clears them.</p>
+  </header>
+
+  <form id="form" novalidate>
+    <div class="setup no-print" id="setup">
+      <fieldset>
+        <legend>Who are you answering for?</legend>
+        <div class="mode-opts">
+          <label class="choice"><input type="radio" name="mode" value="self" checked><span>Myself</span></label>
+          <label class="choice"><input type="radio" name="mode" value="case"><span>A case study</span></label>
+        </div>
+      </fieldset>
+
+      <div id="case-panel" class="field" hidden>
+        <label for="case-name">Name of the person in your case study <span class="small">(optional)</span></label>
+        <input type="text" id="case-name" name="casename" autocomplete="off" maxlength="40">
+        <p class="small">Use the case study from your handout. Answer each item the way you think this person would. Some symptoms aren’t mentioned directly, so use your judgment.</p>
+      </div>
+    </div>
+
+    <p class="stem" id="stem"></p>
+    <div id="items"></div>
+
+    <fieldset class="item difficulty" id="difficulty-item">
+      <legend><span class="num" aria-hidden="true"></span><span id="difficulty-text"></span></legend>
+      <div class="opts" id="difficulty-opts"></div>
+    </fieldset>
+
+    <div class="actions no-print">
+      <button type="submit" class="btn">Calculate score</button>
+    </div>
+    <p id="error" role="alert" class="no-print"></p>
+  </form>
+
+  <section id="results" hidden tabindex="-1" aria-labelledby="results-heading"></section>
+
+  <footer id="footer"></footer>
+</main>
+
+<script>
+/* ------------------------------------------------------------------
+   CONFIG: edit these to fit your course
+------------------------------------------------------------------- */
+const CONFIG = {
+  // false = PHQ-8 (drops item 9 on self-harm; same cutoffs, maximum score 24)
+  includeItem9: true,
+
+  // Shown with support resources. Leave phone or url empty to omit them.
+  counseling: {
+    name: "St Ignatius Wellness Counseling",
+    phone: "",
+    url: "https://sites.google.com/siprep.org/wellness/home"
+  },
+
+  // Lets students answer for a case study from a paper handout instead of themselves.
+  allowCaseMode: true
+};
+
+/* ------------------------------------------------------------------
+   Instrument content (wording from the PHQ-9 as published)
+------------------------------------------------------------------- */
+const ALL_ITEMS = [
+  { text: "Little interest or pleasure in doing things", crit: "A2", critText: "Markedly diminished interest or pleasure", core: true },
+  { text: "Feeling down, depressed, or hopeless", crit: "A1", critText: "Depressed mood", core: true },
+  { text: "Trouble falling or staying asleep, or sleeping too much", crit: "A4", critText: "Insomnia or hypersomnia" },
+  { text: "Feeling tired or having little energy", crit: "A6", critText: "Fatigue or loss of energy" },
+  { text: "Poor appetite or overeating", crit: "A3", critText: "Change in appetite or weight" },
+  { text: "Feeling bad about yourself — or that you are a failure or have let yourself or your family down", crit: "A7", critText: "Worthlessness or excessive guilt" },
+  { text: "Trouble concentrating on things, such as reading the newspaper or watching television", crit: "A8", critText: "Diminished ability to think or concentrate" },
+  { text: "Moving or speaking so slowly that other people could have noticed? Or the opposite — being so fidgety or restless that you have been moving around a lot more than usual", crit: "A5", critText: "Psychomotor agitation or retardation" },
+  { text: "Thoughts that you would be better off dead or of hurting yourself in some way", crit: "A9", critText: "Recurrent thoughts of death or self-harm" }
+];
+const OPTIONS = ["Not at all", "Several days", "More than half the days", "Nearly every day"];
+const DIFFICULTY = ["Not difficult at all", "Somewhat difficult", "Very difficult", "Extremely difficult"];
+
+const ITEMS = CONFIG.includeItem9 ? ALL_ITEMS : ALL_ITEMS.slice(0, 8);
+const NAME = CONFIG.includeItem9 ? "PHQ-9" : "PHQ-8";
+const MAX = ITEMS.length * 3;
+const HAS_CASES = CONFIG.allowCaseMode !== false;
+
+// Severity ranges and the treatment actions proposed by the instrument’s developers
+const BANDS = [
+  { min: 0,  max: 4,   name: "Minimal",           action: "No treatment is indicated by the score alone." },
+  { min: 5,  max: 9,   name: "Mild",              action: "Watchful waiting: the clinician checks in again and repeats the questionnaire at a follow-up visit." },
+  { min: 10, max: 14,  name: "Moderate",          action: "A treatment plan, which might include counseling, scheduled follow-up, and/or medication." },
+  { min: 15, max: 19,  name: "Moderately severe", action: "Active treatment with medication, psychotherapy, or both." },
+  { min: 20, max: MAX, name: "Severe",            action: "Starting medication promptly and, if impairment is severe or the person isn’t improving, a quick referral to a mental health specialist for psychotherapy and/or shared care." }
+];
+
+/* ------------------------------------------------------------------
+   State and helpers
+------------------------------------------------------------------- */
+const state = { mode: "self", answers: Array(ITEMS.length).fill(null), difficulty: null };
+const $ = (sel) => document.querySelector(sel);
+const escapeHTML = (str) => str.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const capFirst = (str) => str.charAt(0).toUpperCase() + str.slice(1);
+const caseName = () => $("#case-name").value.trim().replace(/\s+/g, " ");
+// Self mode: null. Case mode: the typed name, or "this person" if none was given.
+const subjectName = () => state.mode === "self" ? null : (caseName() || "this person");
+const possessive = (name) => name + "’s";
+const hasAnswers = () => state.answers.some(a => a !== null) || state.difficulty !== null;
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function listJoin(arr) {
+  if (arr.length === 1) return String(arr[0]);
+  if (arr.length === 2) return arr[0] + " and " + arr[1];
+  return arr.slice(0, -1).join(", ") + ", and " + arr[arr.length - 1];
+}
+
+function counselingHTML() {
+  const c = CONFIG.counseling;
+  let s = c.url ? `<a href="${c.url}">${c.name}</a>` : c.name;
+  if (c.phone) s += ` (${c.phone})`;
+  return s;
+}
+
+/* ------------------------------------------------------------------
+   Rendering
+------------------------------------------------------------------- */
+function renderStatic() {
+  document.title = NAME + ": Patient Health Questionnaire";
+  $("#title").textContent = NAME;
+  const count = ITEMS.length === 9 ? "nine" : "eight";
+  $("#lede").textContent = `A ${count}-item screening questionnaire for depression, used in primary care clinics and research around the world. Each item matches one of the DSM-5 symptoms of major depressive disorder.`;
+  $("#difficulty-item .num").textContent = "";
+
+  if (!HAS_CASES) $("#setup").hidden = true;
+
+  $("#difficulty-opts").innerHTML = DIFFICULTY.map((d, v) =>
+    `<label class="choice"><input type="radio" name="difficulty" value="${v}"><span><b>${v}</b>${d}</span></label>`
+  ).join("");
+
+  $("#footer").innerHTML = `
+    <p><strong>Need support?</strong> Call or text <a href="tel:988">988</a> to reach the <a href="https://988lifeline.org">988 Suicide &amp; Crisis Lifeline</a> any time (US), or contact ${counselingHTML()}.</p>
+    <p>This page is for classroom learning. A ${NAME} score is a screening result, not a diagnosis.</p>
+    <p>The PHQ-9 was developed by Drs. Robert L. Spitzer, Janet B. W. Williams, Kurt Kroenke, and colleagues, with an educational grant from Pfizer Inc. No permission is required to reproduce, translate, display, or distribute it. Kroenke, K., Spitzer, R. L., &amp; Williams, J. B. W. (2001). The PHQ-9: Validity of a brief depression severity measure. <em>Journal of General Internal Medicine, 16</em>(9), 606–613.${CONFIG.includeItem9 ? "" : " PHQ-8: Kroenke, K., et al. (2009). The PHQ-8 as a measure of current depression in the general population. <em>Journal of Affective Disorders, 114</em>(1–3), 163–173."}</p>`;
+}
+
+function renderItems() {
+  $("#items").innerHTML = ITEMS.map((it, i) => `
+    <fieldset class="item" id="item-${i + 1}">
+      <legend><span class="num">${i + 1}</span><span>${it.text}</span></legend>
+      <div class="opts">
+        ${OPTIONS.map((o, v) => `<label class="choice"><input type="radio" name="q${i}" value="${v}"><span><b>${v}</b>${o}</span></label>`).join("")}
+      </div>
+    </fieldset>`).join("");
+  document.querySelectorAll('input[name="difficulty"]').forEach(r => r.checked = false);
+}
+
+function renderMode() {
+  const name = subjectName();
+  $("#case-panel").hidden = state.mode !== "case";
+  if (name) {
+    $("#stem").textContent = `Over the last 2 weeks, how often has ${name} been bothered by any of the following problems?`;
+    $("#difficulty-text").textContent = `If any problems were checked off, how difficult have these problems made it for ${name} to do work, take care of things at home, or get along with other people?`;
+  } else {
+    $("#stem").textContent = "Over the last 2 weeks, how often have you been bothered by any of the following problems?";
+    $("#difficulty-text").textContent = "If you checked off any problems, how difficult have these problems made it for you to do your work, take care of things at home, or get along with other people?";
+  }
+}
+
+function clearAnswers() {
+  state.answers = Array(ITEMS.length).fill(null);
+  state.difficulty = null;
+  renderItems();
+  $("#results").hidden = true;
+  $("#results").innerHTML = "";
+  $("#error").textContent = "";
+}
+
+/* ------------------------------------------------------------------
+   Scoring
+------------------------------------------------------------------- */
+function score() {
+  const total = state.answers.reduce((s, a) => s + a, 0);
+  const band = BANDS.find(b => total >= b.min && total <= b.max);
+  // Categorical algorithm: a symptom counts at "more than half the days" or more;
+  // item 9 counts at any level above "Not at all".
+  const hits = state.answers.map((a, i) => i === 8 ? a >= 1 : a >= 2);
+  const count = hits.filter(Boolean).length;
+  const core = hits[0] || hits[1];
+  const pattern = count >= 5 && core ? "major" : (count >= 2 && core ? "other" : "none");
+  return { total, band, hits, count, core, pattern };
+}
+
+function verdictText(r) {
+  const n = r.count;
+  const sym = n === 1 ? "symptom reaches" : "symptoms reach";
+  if (r.pattern === "major")
+    return `${n} symptoms reach the threshold, including depressed mood or loss of interest. This pattern meets the questionnaire’s criteria-based algorithm for a major depressive syndrome.`;
+  if (r.pattern === "other")
+    return `${n} symptoms reach the threshold, including depressed mood or loss of interest. The developers called this pattern “other depressive syndrome”: some core symptoms, but fewer than the five needed for a major depressive syndrome.`;
+  if (n >= 2 && !r.core)
+    return `${n} ${sym} the threshold, but neither depressed mood (item 2) nor loss of interest (item 1) does. Because DSM-5 requires at least one of those two core symptoms, this pattern doesn’t meet the algorithm, whatever the total score.`;
+  return `${n === 0 ? "No" : n} ${sym} the threshold, so this pattern doesn’t meet the criteria-based algorithm.`;
+}
+
+function renderResults() {
+  const r = score();
+  const name = subjectName() ? escapeHTML(subjectName()) : null;
+  const who = name ? possessive(capFirst(name)) : "Your";
+  const pos = Math.min(97, Math.max(3, (r.total + 0.5) / (MAX + 1) * 100));
+  const item9 = CONFIG.includeItem9 ? state.answers[8] : 0;
+
+  let html = `<h2 id="results-heading">Results</h2>`;
+
+  if (!name && item9 > 0) {
+    html += `<div class="notice">
+      <p><strong>You marked that you’ve had thoughts of being better off dead or of hurting yourself.</strong> That’s worth talking about with someone today, whatever your total score is.</p>
+      <p>You can call or text <a href="tel:988">988</a> any time to reach the 988 Suicide &amp; Crisis Lifeline, or contact ${counselingHTML()}. If you’re in immediate danger, call 911.</p>
+    </div>`;
+  }
+
+  html += `<p class="total">${who} total score is <strong>${r.total}</strong> out of ${MAX}, in the <strong>${r.band.name.toLowerCase()}</strong> range.</p>
+    <div class="scale" role="img" aria-label="Score of ${r.total} on a scale from 0 to ${MAX}, in the ${r.band.name.toLowerCase()} range">
+      <div class="marker" style="left:${pos}%"><span>${r.total}</span></div>
+      <div class="track">${BANDS.map((b, i) => `<div class="seg${b === r.band ? " active" : ""}" style="flex:${b.max - b.min + 1};background:var(--b${i + 1})"></div>`).join("")}</div>
+      <div class="seg-labels" aria-hidden="true">${BANDS.map(b => `<div style="flex:${b.max - b.min + 1}" class="${b === r.band ? "active" : ""}"><span class="range">${b.min}–${b.max}</span>${b.name}</div>`).join("")}</div>
+    </div>
+
+    <h3>What usually happens next in a clinic</h3>
+    <p>${r.band.action}</p>
+    <p class="small">These are the treatment actions the questionnaire’s developers proposed for each range. Notice how they step up from monitoring, to counseling and medication, to specialist care as scores rise.</p>
+
+    <h3>Score versus symptom pattern</h3>
+    <p>The total treats depression as a dimension: more symptoms, more often, means a higher score. The ${NAME} can also be scored categorically, the way DSM-5 criteria work. A symptom counts when it’s present “more than half the days” or more${CONFIG.includeItem9 ? " (for item 9, any response above “Not at all”)" : ""}. A major depressive syndrome needs five or more symptoms, and at least one must be depressed mood (item 2) or loss of interest (item 1).</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Item</th><th>DSM-5 symptom</th><th>Response</th><th>Counts?</th></tr></thead>
+        <tbody>
+          ${ITEMS.map((it, i) => `<tr class="${r.hits[i] ? "hit" : ""}">
+            <td>${i + 1}</td>
+            <td><span class="crit">${it.crit}</span>${it.critText}${it.core ? ` <span class="core">(core symptom)</span>` : ""}</td>
+            <td>${OPTIONS[state.answers[i]]} (${state.answers[i]})</td>
+            <td class="${r.hits[i] ? "yes" : ""}">${r.hits[i] ? "Yes" : "No"}</td>
+          </tr>`).join("")}
+        </tbody>
+      </table>
+    </div>
+    <p class="verdict">${verdictText(r)}</p>
+    <p>Even a pattern that meets the algorithm isn’t a diagnosis. A clinician would also confirm how long the symptoms have lasted, rule out other explanations such as a medical condition, a substance, or a history of mania, and check that the symptoms cause real distress or impairment.</p>`;
+
+  if (name && item9 > 0) {
+    html += `<p class="small">In practice, any response above “Not at all” on item 9 prompts a same-day safety assessment, whatever the total score.</p>`;
+  }
+
+  html += `<h3>Difficulty functioning</h3>
+    <p>${state.difficulty === null ? "Not answered." : `${who} answer: <strong>${DIFFICULTY[state.difficulty]}</strong>.`}
+    This item isn’t added to the total. It reflects DSM-5 criterion B, which requires that symptoms cause clinically significant distress or impairment in daily life.</p>
+
+    <h3>Think about it</h3>
+    <ul class="discuss">
+      <li>The total score and the symptom pattern don’t always agree. What kind of person could have a high score without meeting the pattern, or the reverse?</li>
+      <li>Which of these symptoms could also come from a medical condition, a medication, a sleep schedule, or a hard life situation?</li>
+      <li>The suggested next steps change as scores rise. Why might a clinician start with counseling for some people and medication for others?</li>
+    </ul>`;
+
+  if (!name && !(item9 > 0)) {
+    html += `<p class="small">If your score surprised you, or if it reflects how you’ve really been feeling, ${counselingHTML()} is a good place to start.</p>`;
+  }
+
+  html += `<div class="actions no-print">
+      <button type="button" class="btn" id="print-btn">Print or save as PDF</button>
+      <button type="button" class="btn secondary" id="reset-btn">Start over</button>
+    </div>`;
+
+  const res = $("#results");
+  res.innerHTML = html;
+  res.hidden = false;
+  $("#print-btn").addEventListener("click", () => window.print());
+  $("#reset-btn").addEventListener("click", () => {
+    clearAnswers();
+    window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
+  });
+}
+
+/* ------------------------------------------------------------------
+   Events
+------------------------------------------------------------------- */
+$("#form").addEventListener("change", (e) => {
+  const t = e.target;
+  if (t.name === "casename") return;
+  if (t.name === "mode") {
+    if (hasAnswers() && !confirm("Switching clears the answers on this page. Continue?")) {
+      document.querySelector(`input[name="mode"][value="${state.mode}"]`).checked = true;
+      return;
+    }
+    state.mode = t.value;
+    clearAnswers();
+    renderMode();
+    return;
+  }
+  if (t.name === "difficulty") {
+    state.difficulty = Number(t.value);
+  } else if (/^q\d+$/.test(t.name)) {
+    const i = Number(t.name.slice(1));
+    state.answers[i] = Number(t.value);
+    $("#item-" + (i + 1)).classList.remove("missing");
+  }
+  if (!$("#results").hidden && state.answers.every(a => a !== null)) renderResults();
+});
+
+$("#form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const missing = state.answers.map((a, i) => a === null ? i + 1 : null).filter(n => n !== null);
+  document.querySelectorAll(".item.missing").forEach(el => el.classList.remove("missing"));
+  if (missing.length) {
+    missing.forEach(n => $("#item-" + n).classList.add("missing"));
+    $("#error").textContent = `Answer item${missing.length > 1 ? "s" : ""} ${listJoin(missing)} to calculate the score.`;
+    const first = $("#item-" + missing[0]);
+    first.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
+    first.querySelector("input").focus({ preventScroll: true });
+    return;
+  }
+  $("#error").textContent = "";
+  renderResults();
+  const res = $("#results");
+  res.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+  res.focus({ preventScroll: true });
+});
+
+$("#case-name").addEventListener("input", () => {
+  renderMode();
+  if (!$("#results").hidden) renderResults();
+});
+$("#case-name").addEventListener("keydown", (e) => { if (e.key === "Enter") e.preventDefault(); });
+
+renderStatic();
+renderItems();
+renderMode();
+</script>
+</body>
+</html>
